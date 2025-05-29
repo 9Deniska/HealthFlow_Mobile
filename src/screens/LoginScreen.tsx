@@ -1,62 +1,64 @@
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, SafeAreaView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, SafeAreaView, Alert } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
+import API from '../api/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
 const LoginScreen: React.FC<Props> = ({ navigation }) => {
+  const [emailOrPhone, setEmailOrPhone] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleLogin = async () => {
+    try {
+      const response = await API.post('/auth/login', {
+        login: emailOrPhone,
+        password,
+      });
+
+      console.log('Login success:', response.data);
+      navigation.navigate('Main');
+    } catch (error: any) {
+      console.error('Login error:', error.response?.data || error.message);
+      Alert.alert('Помилка входу', error.response?.data?.message || 'Невідома помилка');
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <Image 
-        source={require('../../assets/logo.png')} 
-        style={styles.logo}
-        resizeMode="contain"
-      />
-      
+      <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
       <Text style={styles.title}>HealthFlow+</Text>
       <Text style={styles.subtitle}>Вхід в аккаунт</Text>
-      
+
       <View style={styles.formContainer}>
         <TextInput
           style={styles.input}
           placeholder="Email / номер телефона"
+          value={emailOrPhone}
+          onChangeText={setEmailOrPhone}
           placeholderTextColor="#999"
           keyboardType="email-address"
           autoCapitalize="none"
         />
-        
         <TextInput
           style={styles.input}
           placeholder="Пароль"
+          value={password}
+          onChangeText={setPassword}
           placeholderTextColor="#999"
           secureTextEntry={true}
         />
-        
-        <TouchableOpacity style={styles.loginButton} onPress={() => navigation.navigate('Main')}>
+        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
           <Text style={styles.loginButtonText}>Увійти</Text>
         </TouchableOpacity>
       </View>
-      
+
       <View style={styles.registerContainer}>
         <Text style={styles.registerText}>Немає аккаунта? </Text>
         <TouchableOpacity onPress={() => navigation.navigate('Registration')}>
-          <Text style={styles.registerLink}>Зареєструватися на сайті</Text>
+          <Text style={styles.registerLink}>Зареєструватися</Text>
         </TouchableOpacity>
-      </View>
-      
-      <View style={styles.socialContainer}>
-        <Text style={styles.socialText}>Увійти за допомогою:</Text>
-        
-        <View style={styles.socialButtons}>
-          <TouchableOpacity style={[styles.socialButton, styles.googleButton]}>
-            <Text style={styles.socialButtonText}>Google</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={[styles.socialButton, styles.facebookButton]}>
-            <Text style={styles.socialButtonText}>Facebook</Text>
-          </TouchableOpacity>
-        </View>
       </View>
     </SafeAreaView>
   );

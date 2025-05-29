@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Image, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, TextInput, Image, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Alert } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import API from '../api/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Registration'>;
 
@@ -13,20 +14,38 @@ const RegistrationScreen: React.FC<Props> = ({ navigation }) => {
     phone: '',
     birthDate: new Date(),
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const handleChange = (name: string, value: string | Date) => {
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = () => {
-    console.log(formData);
-    navigation.navigate('Login');
+  const handleSubmit = async () => {
+    const [surname, name, middlename] = formData.fullName.trim().split(' ');
+
+    if (formData.password !== formData.confirmPassword) {
+      Alert.alert('Помилка', 'Паролі не співпадають');
+      return;
+    }
+
+    try {
+      await API.post('/auth/register', {
+        surname,
+        name,
+        middlename: middlename || '',
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+        date_of_birth: formData.birthDate.toISOString().split('T')[0],
+      });
+      Alert.alert('Успіх', 'Реєстрація пройшла успішно');
+      navigation.navigate('Main');
+    } catch (error: any) {
+      console.error('Registration error:', error.response?.data || error.message);
+      Alert.alert('Помилка', error.response?.data?.message || 'Невідома помилка');
+    }
   };
 
   const onDateChange = (_: any, selectedDate?: Date) => {
@@ -42,31 +61,31 @@ const RegistrationScreen: React.FC<Props> = ({ navigation }) => {
         <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
         <Text style={styles.title}>HealthFlow+</Text>
         <Text style={styles.subtitle}>Реєстрація</Text>
-        
+
         <View style={styles.formContainer}>
           <TextInput
             style={styles.input}
             placeholder="ПІБ"
-            placeholderTextColor="#999"
             value={formData.fullName}
             onChangeText={(text) => handleChange('fullName', text)}
+            placeholderTextColor="#999"
           />
           <TextInput
             style={styles.input}
             placeholder="Email"
+            value={formData.email}
+            onChangeText={(text) => handleChange('email', text)}
             placeholderTextColor="#999"
             keyboardType="email-address"
             autoCapitalize="none"
-            value={formData.email}
-            onChangeText={(text) => handleChange('email', text)}
           />
           <TextInput
             style={styles.input}
             placeholder="Номер телефону"
-            placeholderTextColor="#999"
-            keyboardType="phone-pad"
             value={formData.phone}
             onChangeText={(text) => handleChange('phone', text)}
+            placeholderTextColor="#999"
+            keyboardType="phone-pad"
           />
           <TouchableOpacity style={styles.input} onPress={() => setShowDatePicker(true)}>
             <Text style={formData.birthDate ? styles.dateText : styles.placeholderText}>
@@ -74,28 +93,23 @@ const RegistrationScreen: React.FC<Props> = ({ navigation }) => {
             </Text>
           </TouchableOpacity>
           {showDatePicker && (
-            <DateTimePicker
-              value={formData.birthDate}
-              mode="date"
-              display="default"
-              onChange={onDateChange}
-            />
+            <DateTimePicker value={formData.birthDate} mode="date" display="default" onChange={onDateChange} />
           )}
           <TextInput
             style={styles.input}
             placeholder="Пароль"
-            placeholderTextColor="#999"
-            secureTextEntry
             value={formData.password}
             onChangeText={(text) => handleChange('password', text)}
+            placeholderTextColor="#999"
+            secureTextEntry
           />
           <TextInput
             style={styles.input}
             placeholder="Підтвердіть пароль"
-            placeholderTextColor="#999"
-            secureTextEntry
             value={formData.confirmPassword}
             onChangeText={(text) => handleChange('confirmPassword', text)}
+            placeholderTextColor="#999"
+            secureTextEntry
           />
           <TouchableOpacity style={styles.registerButton} onPress={handleSubmit}>
             <Text style={styles.registerButtonText}>Зареєструватися</Text>
