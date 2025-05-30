@@ -4,6 +4,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import API from '../api/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Registration'>;
 
@@ -31,17 +32,23 @@ const RegistrationScreen: React.FC<Props> = ({ navigation }) => {
     }
 
     try {
-      await API.post('/auth/register', {
+      const response = await API.post('/auth/register', {
         surname,
         name,
         middlename: middlename || '',
         email: formData.email,
         phone: formData.phone,
         password: formData.password,
-        date_of_birth: formData.birthDate.toISOString().split('T')[0],
+        date_of_birth: formData.birthDate.toISOString()
       });
+
+    const token = response.data.token;
+    await AsyncStorage.removeItem('token');
+    await AsyncStorage.setItem('token', token);
+
       Alert.alert('Успіх', 'Реєстрація пройшла успішно');
       navigation.navigate('Main');
+
     } catch (error: any) {
       console.error('Registration error:', error.response?.data || error.message);
       Alert.alert('Помилка', error.response?.data?.message || 'Невідома помилка');
