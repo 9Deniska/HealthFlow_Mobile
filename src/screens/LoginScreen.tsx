@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, SafeAreaVie
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import API from '../api/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
@@ -10,20 +11,24 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = async () => {
-    try {
-      const response = await API.post('/auth/login', {
-        login: emailOrPhone,
-        password,
-      });
+const handleLogin = async () => {
+  try {
+    const response = await API.post('/auth/login', {
+      login: emailOrPhone,
+      password,
+    });
 
-      console.log('Login success:', response.data);
-      navigation.navigate('Main');
-    } catch (error: any) {
-      console.error('Login error:', error.response?.data || error.message);
-      Alert.alert('Помилка входу', error.response?.data?.message || 'Невідома помилка');
-    }
-  };
+    const token = response.data.token;
+    await AsyncStorage.removeItem('token');
+    await AsyncStorage.setItem('token', token);
+    console.log('Login success, token saved:', token);
+
+    navigation.navigate('Main');
+  } catch (error: any) {
+    console.error('Login error:', error.response?.data || error.message);
+    Alert.alert('Помилка входу', error.response?.data?.message || 'Невідома помилка');
+  }
+};
 
   return (
     <SafeAreaView style={styles.container}>
