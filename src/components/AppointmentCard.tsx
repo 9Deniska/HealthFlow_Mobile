@@ -11,7 +11,7 @@ const AppointmentCard = ({ appointment, onPress }: AppointmentCardProps) => {
   return (
     <View style={styles.card}>
       <View style={styles.row}>
-        <Text style={styles.doctorName}>{appointment.doctorName}</Text>
+        <Text style={styles.doctorName}>{appointment.doctorNameShort}</Text>
         <Text style={styles.specialization}>{appointment.specialization}</Text>
       </View>
       

@@ -13,24 +13,24 @@ export default function AppointmentHistiryScreen() {
   const navigation = useNavigation<AppointmentHistoryScreenNavigationProp>();
 
   const appointments: Appointment[] = [
-    {
-      id: '1',
-      doctorName: 'Петренко І.С.',
-      specialization: 'Логопед',
-      date: '15.01',
-      status: 'не оплачено',
-      time: '14:45',
-      cabinet: '23',
-    },
-    {
-      id: '2',
-      doctorName: 'Якубець В.О.',
-      specialization: 'Педіатр',
-      date: '13.01',
-      status: 'оплачено',
-      time: '12:30',
-      cabinet: '52',
-    },
+    // {
+    //   id: '1',
+    //   doctorName: 'Петренко І.С.',
+    //   specialization: 'Логопед',
+    //   date: '15.01',
+    //   status: 'не оплачено',
+    //   time: '14:45',
+    //   cabinet: '23',
+    // },
+    // {
+    //   id: '2',
+    //   doctorName: 'Якубець В.О.',
+    //   specialization: 'Педіатр',
+    //   date: '13.01',
+    //   status: 'оплачено',
+    //   time: '12:30',
+    //   cabinet: '52',
+    // },
   ];
 
   const handleAppointmentPress = (appointment: Appointment) => {

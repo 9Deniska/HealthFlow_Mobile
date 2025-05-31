@@ -16,7 +16,8 @@ export type RootStackParamList = {
 
 export type Appointment = {
   id: string;
-  doctorName: string;
+  doctorNameShort: string;
+  doctorNameFull: string;
   specialization: string;
   date: string;
   status: 'оплачено' | 'не оплачено';
@@ -31,3 +32,33 @@ export type Doctor = {
   lastVisitDate?: string;
   avatar: ImageSourcePropType;
 };
+
+export interface FetchedAppointment {
+  appointment_id: number;
+  client_id: number;
+  appointment_date: string;
+  start_time: string;
+  end_time: string;
+  status: string;
+  price: string;
+  is_paid: boolean;
+  doctor: {
+    doctor_id: number;
+    specialization_id: number;
+    rating: number;
+    department_id: number;
+  };
+  client: {
+    user_id: number;
+    name: string;
+    surname: string;
+    middlename: string;
+    date_of_birth: string;
+    email: string;
+    phone: string;
+    password_hash: string;
+    role: string;
+    google_id: string | null;
+    registration_date: string;
+  };
+}
