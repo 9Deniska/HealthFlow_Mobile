@@ -3,6 +3,7 @@ import Header from '../components/Header';
 import { View, ScrollView, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { decodeToken } from '../utils/decodeToken';
 import API from '../api/api';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -41,8 +42,10 @@ const ProfileScreen = () => {
   useEffect(() => {
     const fetchUser = async () => {
       const token = await AsyncStorage.getItem('token');
+      if (!token) return;
+      const { sub: userId } = decodeToken(token);
       try {
-        const res = await API.get('/users/profile', {
+        const res = await API.get(`/users/profile/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -60,6 +63,8 @@ const ProfileScreen = () => {
 
   const handleSave = async () => {
     const token = await AsyncStorage.getItem('token');
+    if (!token) return;
+    const { sub: userId } = decodeToken(token);
     try {
       const updateData: any = {
         name: user.name,
@@ -72,7 +77,7 @@ const ProfileScreen = () => {
         updateData.password = user.password;
       }
 
-      await API.patch('/users/profile', updateData, {
+      await API.patch(`/users/profile/${userId}`, updateData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
