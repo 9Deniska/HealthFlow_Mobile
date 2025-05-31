@@ -1,35 +1,55 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Header from '../components/Header';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/types';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 const DoneAppointmentScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const route = useRoute<RouteProp<RootStackParamList, 'DoneAppointment'>>();
+  const { appointment } = route.params;
+
+  const isPaid = appointment.status === 'оплачено';
+
+  const statusContainerStyle = {
+    backgroundColor: isPaid ? '#d4edda' : '#fff3cd',
+    borderLeftColor: isPaid ? '#28a745' : '#ffc107',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 20,
+    borderLeftWidth: 4,
+  };
+
+  const statusTextStyle = {
+    fontSize: 16,
+    color: isPaid ? '#155724' : '#856404',
+  };
 
   return (
     <View style={styles.container}>
       <Header title="Деталі запису" showBack />
 
       <View style={styles.content}>
-        <Text style={styles.doctorName}>Якубець В.О.</Text>
+        <Text style={styles.doctorName}>{appointment.doctorNameFull}</Text>
 
         <View style={styles.row}>
-          <Text style={styles.appointmentNumber}>№5322323353</Text>
-          <Text style={styles.appointmentDate}>21.03.2025</Text>
+          <Text style={styles.appointmentNumber}>Запис №{appointment.id}</Text>
+          <Text style={styles.appointmentDate}>{appointment.date}</Text>
         </View>
 
         <View style={styles.infoSection}>
-          <Text style={styles.infoText}>Спеціалізація: педіатр</Text>
-          <Text style={styles.infoText}>Кабінет: 52</Text>
+          <Text style={styles.infoText}>Спеціалізація: {appointment.specialization}</Text>
+          <Text style={styles.infoText}>Кабінет: {appointment.cabinet}</Text>
         </View>
 
-        <View style={styles.statusContainer}>
-          <Text style={styles.statusText}>Статус: Завершений, чекає на оплату</Text>
+        <View style={statusContainerStyle}>
+          <Text style={statusTextStyle}>
+            Статус: Завершено, {isPaid ? 'оплачено' : 'чекає на оплату'}
+          </Text>
         </View>
 
-        <Text style={styles.priceText}>Вартість: 5000 грн</Text>
+        <Text style={styles.priceText}>Вартість: {appointment.price} грн</Text>
 
         <TouchableOpacity onPress={() => navigation.navigate('Review')}>
           <Text style={styles.reviewLink}>Написати відгук... </Text>
@@ -48,7 +68,16 @@ const DoneAppointmentScreen = () => {
 
               <TouchableOpacity
                 style={styles.contactButton}
-                onPress={() => navigation.navigate('TextChat')}
+                onPress={() =>
+                  navigation.navigate('TextChat', {
+                    doctor: {
+                      id: '1',
+                      name: appointment.doctorNameFull,
+                      specialization: appointment.specialization,
+                      avatar: require('../../assets/avatar.png'),
+                    },
+                  })
+                }
               >
                 <Text style={styles.contactButtonText}>💬</Text>
               </TouchableOpacity>
@@ -82,7 +111,7 @@ const styles = StyleSheet.create({
   doctorName: {
     fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 20,
     color: '#2c3e50',
     textAlign: 'center',
   },
@@ -98,15 +127,6 @@ const styles = StyleSheet.create({
   appointmentDate: { fontSize: 16, fontWeight: '500', color: '#555' },
   infoSection: { marginBottom: 20 },
   infoText: { fontSize: 16, marginBottom: 8, color: '#333' },
-  statusContainer: {
-    backgroundColor: '#fff3cd',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 20,
-    borderLeftWidth: 4,
-    borderLeftColor: '#ffc107',
-  },
-  statusText: { fontSize: 16, color: '#856404' },
   priceText: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -116,7 +136,7 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 15,
+    marginTop: 220,
   },
   actionButton: {
     flex: 1,
@@ -131,9 +151,6 @@ const styles = StyleSheet.create({
   },
   medicalCardButton: {
     marginRight: 7,
-    backgroundColor: '#3498db',
-  },
-  reviewButton: {
     backgroundColor: '#3498db',
   },
   contactSection: {

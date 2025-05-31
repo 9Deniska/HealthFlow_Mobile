@@ -23,6 +23,7 @@ export type Appointment = {
   status: 'оплачено' | 'не оплачено';
   time: string;
   cabinet: string;
+  price: string;
 };
 
 export type Doctor = {

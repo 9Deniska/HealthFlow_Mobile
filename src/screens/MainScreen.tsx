@@ -95,6 +95,7 @@ export default function MainScreen() {
             status: item.is_paid ? 'оплачено' : 'не оплачено',
             time: item.start_time.slice(0, 5),
             cabinet: `${cabinet}`,
+            price: item.price || '0',
           };
         });
 
