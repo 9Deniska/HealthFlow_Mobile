@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import Header from '../components/Header';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/types';
@@ -61,7 +61,18 @@ const DoneAppointmentScreen = () => {
             <View style={styles.actionsContainer}>
               <TouchableOpacity
                 style={styles.contactButton}
-                onPress={() => console.log('Запуск відеодзвінка')}
+                onPress={() => {
+                  const url = 'https://meet.google.com/pby-cthv-csd?authuser=0';
+                  Linking.canOpenURL(url)
+                    .then((supported) => {
+                      if (supported) {
+                        return Linking.openURL(url);
+                      } else {
+                        console.log("Не вдається відкрити URL: " + url);
+                      }
+                    })
+                    .catch((err) => console.error('Помилка відкриття URL:', err));
+                }}
               >
                 <Text style={styles.contactButtonText}>🎥</Text>
               </TouchableOpacity>

@@ -35,6 +35,22 @@ export type Doctor = {
   avatar: ImageSourcePropType;
 };
 
+export type MedicalRecord = {
+  medical_record_id: number;
+  client_id: number;
+  diagnosis: string;
+  recommendations: string[];
+  appointment_date: string;
+  doctor: {
+    doctor_id: number;
+    user: {
+      name: string;
+      surname: string;
+      middlename: string;
+    };
+  };
+};
+
 export interface FetchedAppointment {
   appointment_id: number;
   client_id: number;

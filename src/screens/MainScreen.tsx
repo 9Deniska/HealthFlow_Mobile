@@ -25,8 +25,8 @@ export default function MainScreen() {
         const decoded = decodeToken(token);
         const userId = decoded.sub;
 
-        const [recordsRes, doctorsRes, departmentsRes] = await Promise.all([
-          API.get('/records'),
+        const [appointmentsRes, doctorsRes, departmentsRes] = await Promise.all([
+          API.get('/appointments'),
           API.get('/users/doctors'),
           API.get('/departments'),
         ]);
@@ -41,7 +41,7 @@ export default function MainScreen() {
           departmentMap.set(dep.id, dep);
         });
 
-        const filtered = recordsRes.data.filter(
+        const filtered = appointmentsRes.data.filter(
           (item: any) => item.client_id === userId && item.status === 'scheduled'
         );
 
@@ -84,7 +84,7 @@ export default function MainScreen() {
             ? specializationMap.get(doctor.specialization_id) || '—'
             : '—';
 
-          const cabinet = '—';
+          const cabinet = `${doctor?.cabinet ?? '—'}`;
 
           return {
             id: item.appointment_id.toString(),
@@ -94,7 +94,7 @@ export default function MainScreen() {
             date: new Date(item.appointment_date).toLocaleDateString('uk-UA'),
             status: item.is_paid ? 'оплачено' : 'не оплачено',
             time: item.start_time.slice(0, 5),
-            cabinet: `${cabinet}`,
+            cabinet,
             price: item.price || '0',
           };
         });
