@@ -9,13 +9,14 @@ export type RootStackParamList = {
   Contact: undefined;
   Notifications: undefined;
   MedicCard: undefined;
-  Review: undefined;
+  Review: { appointment: Appointment };
   DoneAppointment: { appointment: Appointment };
   TextChat?: { doctor: Doctor };
 };
 
 export type Appointment = {
   id: string;
+  doctorId?: number;
   doctorNameShort: string;
   doctorNameFull: string;
   specialization: string;

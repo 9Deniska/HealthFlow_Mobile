@@ -86,6 +86,7 @@ export default function AppointmentHistoryScreen() {
 
         return {
           id: item.appointment_id.toString(),
+          doctorId: item.doctor_id,
           doctorNameShort,
           doctorNameFull,
           specialization: specializationLabel,

@@ -51,7 +51,7 @@ const DoneAppointmentScreen = () => {
 
         <Text style={styles.priceText}>Вартість: {appointment.price} грн</Text>
 
-        <TouchableOpacity onPress={() => navigation.navigate('Review')}>
+        <TouchableOpacity onPress={() => navigation.navigate('Review', { appointment })}>
           <Text style={styles.reviewLink}>Написати відгук... </Text>
         </TouchableOpacity>
 
