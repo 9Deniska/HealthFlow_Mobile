@@ -4,25 +4,25 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import API from '../api/api';
 import { decodeToken } from '../utils/decodeToken';
 
-interface AuthState {
+interface GoogleAuth {
   token: string | null;
   authenticated: boolean | null;
   role: string | null;
 }
 
 interface AuthProps {
-  authState?: AuthState;
+  googleAuth?: GoogleAuth;
   onLogin?: (login: string, password: string) => Promise<any>;
   onGoogleLogin?: () => Promise<any>;
   onLogout?: () => Promise<any>;
 }
 
-const AuthContext = createContext<AuthProps>({});
+const GoogleAuth = createContext<AuthProps>({});
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => useContext(GoogleAuth);
 
 export const AuthProvider = ({ children }: any) => {
-  const [authState, setAuthState] = useState<AuthState>({ 
+  const [googleAuth, setGoogleAuth] = useState<GoogleAuth>({ 
     token: null, 
     authenticated: null,
     role: null
@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }: any) => {
       const token = response.data.token;
       const decoded = decodeToken(token);
       await AsyncStorage.setItem('token', token);
-      setAuthState({ token, authenticated: true, role: decoded.role });
+      setGoogleAuth({ token, authenticated: true, role: decoded.role });
       return { error: false, token, role: decoded.role };
     } catch (error: any) {
       return { error: true, message: error.response?.data?.message || error.message };
@@ -43,33 +43,27 @@ export const AuthProvider = ({ children }: any) => {
 
 const googleLogin = async () => {
   try {
-    console.log('[GoogleLogin] ➤ Старт входу через Google');
     await GoogleSignin.signOut();
-    console.log('[GoogleLogin] ➤ Перевірка Google Play Services');
     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-    console.log('[GoogleLogin] ➤ Вхід...');
     const userInfo = await GoogleSignin.signIn();
-    console.log('[GoogleLogin] ✔ Отримано userInfo:', userInfo);
-    const { idToken } = await GoogleSignin.getTokens();
-    console.log('[GoogleLogin] ✔ idToken отримано:', idToken?.slice(0, 30) + '...');
+    const { idToken, accessToken } = await GoogleSignin.getTokens();
 
     if (!idToken) {
-      throw new Error('❌ Не вдалося отримати токен від Google');
+      throw new Error('Не вдалося отримати токен від Google');
     }
-    console.log('[GoogleLogin] ➤ Надсилання токена на бекенд...');
     const response = await API.post('/auth/google-login', {
-      accessToken: idToken,
+      accessToken: accessToken,
     });
 
-    console.log('[GoogleLogin] ✔ Отримано відповідь від сервера:', response.data);
+    console.log('[GoogleLogin] Отримано відповідь від сервера:', response.data);
     const { token, role } = response.data;
     const decoded = decodeToken(token);
     await AsyncStorage.setItem('token', token);
-    setAuthState({ token, authenticated: true, role: decoded.role });
+    setGoogleAuth({ token, authenticated: true, role: decoded.role });
 
     return { error: false, token, role: decoded.role };
   } catch (error: any) {
-    console.error('[GoogleLogin] ❌ Помилка входу через Google:', error?.response?.data || error?.message || error);
+    console.error('[GoogleLogin] Помилка входу через Google:', error?.response?.data || error?.message || error);
     return {
       error: true,
       message: error?.response?.data?.message || error.message || 'Помилка входу через Google',
@@ -85,15 +79,15 @@ const googleLogin = async () => {
       console.warn('Google signOut error:', error);
     }
     await AsyncStorage.removeItem('token');
-    setAuthState({ token: null, authenticated: false, role: null });
+    setGoogleAuth({ token: null, authenticated: false, role: null });
   };
 
   const value = {
     onLogin: login,
     onGoogleLogin: googleLogin,
     onLogout: logout,
-    authState
+    googleAuth
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <GoogleAuth.Provider value={value}>{children}</GoogleAuth.Provider>;
 };

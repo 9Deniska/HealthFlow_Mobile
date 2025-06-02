@@ -18,7 +18,7 @@ export default function App() {
       webClientId: '585542192137-5pnatjnvpesg6vlvpakgub4h1tsbe18o.apps.googleusercontent.com',
       offlineAccess: true,
       forceCodeForRefreshToken: true,
-      scopes: ['profile', 'email'],
+      scopes: ['profile', 'email', 'https://www.googleapis.com/auth/user.birthday.read','https://www.googleapis.com/auth/user.phonenumbers.read',],
     });
   }, []);
 
