@@ -14,12 +14,12 @@ if (typeof global.Buffer === 'undefined') {
 
 export default function App() {
   useEffect(() => {
-  GoogleSignin.configure({
-    webClientId: '585542192137-5pnatjnvpesg6vlvpakgub4h1tsbe18o.apps.googleusercontent.com',
-    offlineAccess: true,
-    forceCodeForRefreshToken: true,
-    scopes: ['profile', 'email'],
-  });
+    GoogleSignin.configure({
+      webClientId: '585542192137-5pnatjnvpesg6vlvpakgub4h1tsbe18o.apps.googleusercontent.com',
+      offlineAccess: true,
+      forceCodeForRefreshToken: true,
+      scopes: ['profile', 'email'],
+    });
   }, []);
 
   return (

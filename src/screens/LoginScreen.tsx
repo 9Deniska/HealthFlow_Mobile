@@ -38,11 +38,13 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
     setGoogleLoading(true);
     try {
       const result = await onGoogleLogin!();
+      
       if (result?.error) {
-        Alert.alert('Помилка Google входу', result.message);
-      } else {
-        navigation.navigate('Main');
+        Alert.alert('Помилка', result.message || 'Не вдалося увійти через Google');
+        return;
       }
+
+      navigation.navigate('Main');
     } catch (error: any) {
       Alert.alert('Помилка', error.message || 'Невідома помилка');
     } finally {
