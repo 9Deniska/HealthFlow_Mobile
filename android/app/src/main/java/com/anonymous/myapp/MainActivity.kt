@@ -1,4 +1,4 @@
-package com.anonymous.myapp
+package com.deniska9.healthflow
 
 import android.os.Build
 import android.os.Bundle

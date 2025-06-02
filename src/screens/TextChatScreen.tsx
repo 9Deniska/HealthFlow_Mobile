@@ -40,7 +40,7 @@ const TextChatScreen = ({ route }: Props) => {
 
   return (
     <View style={styles.container}>
-      <Header title={doctor ? `${doctor.name} (${doctor.specialization})` : 'Чат з лікарем'} showBack />
+      <Header title= {doctor ? `${doctor.name} \n(${doctor.specialization})` : 'Чат з лікарем'} showBack />
 
       <ScrollView
         style={styles.messagesContainer}

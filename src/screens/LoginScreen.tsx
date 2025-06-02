@@ -2,33 +2,53 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, SafeAreaView, Alert } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
-import API from '../api/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../components/GoogleAuth';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
 const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const { onLogin, onGoogleLogin } = useAuth();
 
-const handleLogin = async () => {
-  try {
-    const response = await API.post('/auth/login', {
-      login: emailOrPhone,
-      password,
-    });
+  const handleLogin = async () => {
+    if (!emailOrPhone || !password) {
+      Alert.alert('Помилка', 'Будь ласка, заповніть всі поля');
+      return;
+    }
 
-    const token = response.data.token;
-    await AsyncStorage.removeItem('token');
-    await AsyncStorage.setItem('token', token);
-    console.log('Login success, token saved:', token);
+    setLoading(true);
+    try {
+      const result = await onLogin!(emailOrPhone, password);
+      if (result?.error) {
+        Alert.alert('Помилка входу', result.message);
+      } else {
+        navigation.navigate('Main');
+      }
+    } catch (error: any) {
+      Alert.alert('Помилка', error.message || 'Невідома помилка');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    navigation.navigate('Main');
-  } catch (error: any) {
-    console.error('Login error:', error.response?.data || error.message);
-    Alert.alert('Помилка входу', error.response?.data?.message || 'Невідома помилка');
-  }
-};
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    try {
+      const result = await onGoogleLogin!();
+      if (result?.error) {
+        Alert.alert('Помилка Google входу', result.message);
+      } else {
+        navigation.navigate('Main');
+      }
+    } catch (error: any) {
+      Alert.alert('Помилка', error.message || 'Невідома помилка');
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -54,17 +74,39 @@ const handleLogin = async () => {
           placeholderTextColor="#999"
           secureTextEntry={true}
         />
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-          <Text style={styles.loginButtonText}>Увійти</Text>
+        <TouchableOpacity 
+          style={styles.loginButton} 
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          <Text style={styles.loginButtonText}>
+            {loading ? 'Завантаження...' : 'Увійти'}
+          </Text>
         </TouchableOpacity>
-      </View>
 
-      <View style={styles.registerContainer}>
+              <View style={styles.registerContainer}>
         <Text style={styles.registerText}>Немає аккаунта? </Text>
         <TouchableOpacity onPress={() => navigation.navigate('Registration')}>
           <Text style={styles.registerLink}>Зареєструватися</Text>
         </TouchableOpacity>
       </View>
+
+        <View style={styles.socialContainer}>
+          <Text style={styles.socialText}>Або увійти за допомогою</Text>
+          <View style={styles.socialButtons}>
+            <TouchableOpacity 
+              style={[styles.socialButton, styles.googleButton]} 
+              onPress={handleGoogleSignIn}
+              disabled={googleLoading}
+            >
+              <Text style={styles.socialButtonText}>
+                {googleLoading ? 'Завантаження...' : 'Google'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+
     </SafeAreaView>
   );
 };
@@ -122,7 +164,8 @@ const styles = StyleSheet.create({
   registerContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 30,
+    marginBottom: 20,
+    marginTop: 15,
   },
   registerText: {
     color: '#7f8c8d',

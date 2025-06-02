@@ -1,14 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  ScrollView,
-  TextInput,
-  StyleSheet,
-  Text,
-  Linking,
-  ActivityIndicator,
-  RefreshControl,
-} from 'react-native';
+import { View, ScrollView, TextInput, StyleSheet, Text, Linking, ActivityIndicator, RefreshControl, } from 'react-native';
 import Header from '../components/Header';
 import DoctorContactCard from '../components/DoctorContactCard';
 import { useNavigation } from '@react-navigation/native';

@@ -112,35 +112,42 @@ export default function MainScreen() {
   }, []);
 
   return (
-    <View>
+    <View style={styles.wrapper}>
       <Header title="Ваші записи" />
-        <ScrollView
-          style={styles.container}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={fetchAppointments} />
-          }
-        >
-          {loading ? (
-            <ActivityIndicator size="large" color="#0000ff" />
-          ) : appointments.length > 0 ? (
-            appointments.map((appointment) => (
-              <AppointmentCard
-                key={appointment.id}
-                appointment={appointment}
-                onPress={() => navigation.navigate('AppointmentDetails', { appointment })}
-              />
-            ))
-          ) : (
-            <Text style={styles.emptyText}>У вас немає активних записів</Text>
-          )}
-        </ScrollView>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={fetchAppointments} />
+        }
+      >
+        {loading ? (
+          <ActivityIndicator size="large" color="#0000ff" />
+        ) : appointments.length > 0 ? (
+          appointments.map((appointment) => (
+            <AppointmentCard
+              key={appointment.id}
+              appointment={appointment}
+              onPress={() =>
+                navigation.navigate('AppointmentDetails', { appointment })
+              }
+            />
+          ))
+        ) : (
+          <Text style={styles.emptyText}>У вас немає активних записів</Text>
+        )}
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   container: {
     padding: 15,
+    paddingBottom: 30,
   },
   emptyText: {
     textAlign: 'center',
