@@ -23,14 +23,42 @@ const RegistrationScreen: React.FC<Props> = ({ navigation }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async () => {
-    const [surname, name, middlename] = formData.fullName.trim().split(' ');
-
-    if (formData.password !== formData.confirmPassword) {
-      Alert.alert('Помилка', 'Паролі не співпадають');
-      return;
+  const validateForm = () => {
+    const { fullName, email, phone, birthDate, password, confirmPassword } = formData;
+    const nameParts = fullName.trim().split(' ');
+    if (nameParts.length < 2) {
+      Alert.alert('Помилка', 'Введіть ПІБ (мінімум ім’я та прізвище)');
+      return false;
     }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.toLowerCase())) {
+      Alert.alert('Помилка', 'Введіть коректну електронну пошту example@example.com');
+      return false;
+    }
+    const digitsOnly = phone.replace(/\D/g, '');
+    if (digitsOnly.length < 10) {
+      Alert.alert('Помилка', 'Введіть коректний номер телефону (мінімум 10 цифр)');
+      return false;
+    }
+    const today = new Date();
+    if (birthDate > today) {
+      Alert.alert('Помилка', 'Дата народження не може бути в майбутньому');
+      return false;
+    }
+    if (password.length < 6) {
+      Alert.alert('Помилка', 'Пароль має містити мінімум 6 символів');
+      return false;
+    }
+    if (password !== confirmPassword) {
+      Alert.alert('Помилка', 'Паролі не співпадають');
+      return false;
+    }
+    return true;
+  };
 
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+    const [surname, name, middlename] = formData.fullName.trim().split(' ');
     try {
       const response = await API.post('/auth/register', {
         surname,
@@ -41,14 +69,11 @@ const RegistrationScreen: React.FC<Props> = ({ navigation }) => {
         password: formData.password,
         date_of_birth: formData.birthDate.toISOString()
       });
-
-    const token = response.data.token;
-    await AsyncStorage.removeItem('token');
-    await AsyncStorage.setItem('token', token);
-
+      const token = response.data.token;
+      await AsyncStorage.removeItem('token');
+      await AsyncStorage.setItem('token', token);
       Alert.alert('Успіх', 'Реєстрація пройшла успішно');
       navigation.navigate('Main');
-
     } catch (error: any) {
       console.error('Registration error:', error.response?.data || error.message);
       Alert.alert('Помилка', error.response?.data?.message || 'Невідома помилка');
@@ -68,7 +93,6 @@ const RegistrationScreen: React.FC<Props> = ({ navigation }) => {
         <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
         <Text style={styles.title}>HealthFlow+</Text>
         <Text style={styles.subtitle}>Реєстрація</Text>
-
         <View style={styles.formContainer}>
           <TextInput
             style={styles.input}
@@ -122,7 +146,6 @@ const RegistrationScreen: React.FC<Props> = ({ navigation }) => {
             <Text style={styles.registerButtonText}>Зареєструватися</Text>
           </TouchableOpacity>
         </View>
-
         <View style={styles.loginContainer}>
           <Text style={styles.loginText}>Вже є аккаунт? </Text>
           <TouchableOpacity onPress={() => navigation.navigate('Login')}>
@@ -134,81 +157,80 @@ const RegistrationScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
+  container: { 
+    flex: 1, 
+    backgroundColor: '#fff' 
   },
-  scrollContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 40,
+  scrollContainer: { 
+    paddingHorizontal: 20, 
+    paddingTop: 20, 
+    paddingBottom: 40 
   },
-  logo: {
-    width: 100,
-    height: 100,
-    alignSelf: 'center',
-    marginBottom: 20,
-    marginTop: 50,
+  logo: { 
+    width: 100, 
+    height: 100, 
+    alignSelf: 'center', 
+    marginBottom: 20, 
+    marginTop: 50 
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#2c3e50',
-    marginBottom: 5,
+  title: { 
+    fontSize: 24, 
+    fontWeight: 'bold', 
+    textAlign: 'center', 
+    color: '#2c3e50', 
+    marginBottom: 5 
   },
-  subtitle: {
-    fontSize: 18,
-    textAlign: 'center',
-    color: '#7f8c8d',
-    marginBottom: 30,
+  subtitle: { 
+    fontSize: 18, 
+    textAlign: 'center', 
+    color: '#7f8c8d', 
+    marginBottom: 30 
   },
-  formContainer: {
-    marginBottom: 20,
+  formContainer: { 
+    marginBottom: 20 
   },
-  input: {
-    height: 50,
-    borderColor: '#ddd',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    marginBottom: 15,
-    fontSize: 16,
-    justifyContent: 'center',
+  input: { 
+    height: 50, 
+    borderColor: '#ddd', 
+    borderWidth: 1, 
+    borderRadius: 8, 
+    paddingHorizontal: 15, 
+    marginBottom: 15, 
+    fontSize: 16, 
+    justifyContent: 'center' 
   },
-  dateText: {
-    color: '#000',
-    fontSize: 16,
+  dateText: { 
+    color: '#000', 
+    fontSize: 16 
   },
-  placeholderText: {
-    color: '#999',
-    fontSize: 16,
+  placeholderText: { 
+    color: '#999', 
+    fontSize: 16 
   },
-  registerButton: {
-    backgroundColor: '#3498db',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
+  registerButton: { 
+    backgroundColor: '#3498db', 
+    padding: 15, 
+    borderRadius: 8, 
+    alignItems: 'center', 
+    marginTop: 10 
   },
-  registerButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
+  registerButtonText: { 
+    color: 'white', 
+    fontSize: 18, 
+    fontWeight: 'bold' 
   },
-  loginContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 20,
+  loginContainer: { 
+    flexDirection: 'row', 
+    justifyContent: 'center', 
+    marginTop: 20 
   },
-  loginText: {
-    color: '#7f8c8d',
+  loginText: { 
+    color: '#7f8c8d' 
   },
-  loginLink: {
-    color: '#3498db',
-    fontWeight: 'bold',
+  loginLink: { 
+    color: '#3498db', 
+    fontWeight: 'bold' 
   },
 });
 

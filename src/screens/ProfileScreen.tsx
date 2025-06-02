@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Header from '../components/Header';
-import { View, ScrollView, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import { View, ScrollView, Text, StyleSheet, TouchableOpacity, TextInput, Alert } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { decodeToken } from '../utils/decodeToken';
@@ -8,8 +8,6 @@ import API from '../api/api';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
-
-
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'AppointmentHistory'>;
 
@@ -28,16 +26,15 @@ const ProfileScreen = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   function formatDate(date: string | Date): string {
-  if (!date) return '';
-  if (typeof date === 'string') {
-
-    return date.includes('T') ? date.split('T')[0] : date;
+    if (!date) return '';
+    if (typeof date === 'string') {
+      return date.includes('T') ? date.split('T')[0] : date;
+    }
+    if (date instanceof Date) {
+      return date.toISOString().split('T')[0];
+    }
+    return String(date).split('T')[0];
   }
-  if (date instanceof Date) {
-    return date.toISOString().split('T')[0];
-  }
-  return String(date).split('T')[0];
-}
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -48,44 +45,83 @@ const ProfileScreen = () => {
         const res = await API.get(`/users/profile/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-
         setUser({
           ...res.data,
           date_of_birth: formatDate(res.data.date_of_birth),
           password: '',
         });
-      } catch (error) {
-        console.error('Помилка при завантаженні профілю:', error);
+      } catch {
+        Alert.alert('Помилка', 'Не вдалося завантажити профіль');
       }
     };
     fetchUser();
   }, []);
 
+  const validateEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.toLowerCase());
+
+  const validatePhone = (phone: string) => {
+    if (!phone.startsWith('+380')) return false;
+    const digits = phone.replace(/\D/g, '');
+    return digits.length === 12;
+  };
+
+  const validateDateOfBirth = (dateStr: string) => {
+    if (!dateStr) return false;
+    const date = new Date(dateStr);
+    const now = new Date();
+    return date <= now;
+  };
+
+  const validatePassword = (password: string) => password.length === 0 || password.length >= 6;
+
   const handleSave = async () => {
+    if (user.name.trim() === '') {
+      Alert.alert('Помилка', "Ім'я не може бути порожнім");
+      return;
+    }
+    if (user.surname.trim() === '') {
+      Alert.alert('Помилка', 'Фамілія не може бути порожньою');
+      return;
+    }
+    if (!validateEmail(user.email)) {
+      Alert.alert('Помилка', 'Введіть коректну електронну пошту');
+      return;
+    }
+    if (!validatePhone(user.phone)) {
+      Alert.alert('Помилка', 'Номер телефону повинен починатися з +380 і містити 12 цифр');
+      return;
+    }
+    if (!validateDateOfBirth(user.date_of_birth)) {
+      Alert.alert('Помилка', 'Дата народження не може бути в майбутньому або порожньою');
+      return;
+    }
+    if (!validatePassword(user.password)) {
+      Alert.alert('Помилка', 'Пароль має містити мінімум 6 символів або бути порожнім');
+      return;
+    }
+
     const token = await AsyncStorage.getItem('token');
     if (!token) return;
     const { sub: userId } = decodeToken(token);
     try {
       const updateData: any = {
-        name: user.name,
-        surname: user.surname,
-        email: user.email,
-        phone: user.phone,
-        date_of_birth: user.date_of_birth,
+        name: user.name.trim(),
+        surname: user.surname.trim(),
+        email: user.email.trim(),
+        phone: user.phone.trim(),
+        date_of_birth: formatDate(user.date_of_birth),
       };
-      if (user.password && user.password.trim() !== '') {
+      if (user.password.trim() !== '') {
         updateData.password = user.password;
       }
-
       await API.patch(`/users/profile/${userId}`, updateData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       setIsEditing(false);
       setUser(prev => ({ ...prev, password: '' }));
-    } catch (error) {
-      console.error('Помилка при збереженні профілю:', error);
+      Alert.alert('Успіх', 'Профіль оновлено');
+    } catch {
+      Alert.alert('Помилка', 'Не вдалося зберегти профіль');
     }
   };
 
@@ -96,7 +132,14 @@ const ProfileScreen = () => {
     }
   };
 
-  const renderField = (label: string, value: string, key: keyof typeof user, secureTextEntry = false) => (
+  const renderField = (
+    label: string,
+    value: string,
+    key: keyof typeof user,
+    secureTextEntry = false,
+    keyboardType: 'default' | 'email-address' | 'phone-pad' = 'default',
+    autoCapitalize: 'none' | 'sentences' | 'words' | 'characters' = 'sentences'
+  ) => (
     <View style={styles.inputContainer}>
       <Text style={styles.label}>{label}</Text>
       {isEditing ? (
@@ -105,8 +148,8 @@ const ProfileScreen = () => {
           value={user[key]}
           onChangeText={(text) => setUser({ ...user, [key]: text })}
           secureTextEntry={secureTextEntry}
-          keyboardType={key === 'email' ? 'email-address' : 'default'}
-          autoCapitalize={key === 'email' ? 'none' : 'sentences'}
+          keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
         />
       ) : (
         <Text style={styles.value}>{key === 'password' ? '********' : value}</Text>
@@ -120,12 +163,11 @@ const ProfileScreen = () => {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.profileSection}>
           <Text style={styles.sectionTitle}>Особисті дані</Text>
-
-          {renderField("Ім'я", user.name, 'name')}
-          {renderField('Фамілія', user.surname, 'surname')}
-          {renderField('Ел. пошта', user.email, 'email')}
-          {renderField('Номер телефону', user.phone, 'phone')}
-           <View style={styles.inputContainer}>
+          {renderField("Ім'я", user.name, 'name', false, 'default', 'words')}
+          {renderField('Фамілія', user.surname, 'surname', false, 'default', 'words')}
+          {renderField('Ел. пошта', user.email, 'email', false, 'email-address', 'none')}
+          {renderField('Номер телефону', user.phone, 'phone', false, 'phone-pad', 'none')}
+          <View style={styles.inputContainer}>
             <Text style={styles.label}>Дата народження</Text>
             {isEditing ? (
               <>
@@ -140,6 +182,7 @@ const ProfileScreen = () => {
                     mode="date"
                     display="default"
                     onChange={handleDateChange}
+                    maximumDate={new Date()}
                   />
                 )}
               </>
@@ -149,8 +192,7 @@ const ProfileScreen = () => {
               </Text>
             )}
           </View>
-          {renderField('Пароль', '********', 'password')}
-
+          {renderField('Пароль', '********', 'password', true, 'default', 'none')}
           <TouchableOpacity
             style={styles.editButton}
             onPress={isEditing ? handleSave : () => setIsEditing(true)}
@@ -158,7 +200,6 @@ const ProfileScreen = () => {
             <Text style={styles.editButtonText}>{isEditing ? 'Зберегти' : 'Редагувати'}</Text>
           </TouchableOpacity>
         </View>
-
         <View style={styles.historySection}>
           <Text style={styles.sectionTitle}>📅 Історія записів</Text>
           <TouchableOpacity onPress={() => navigation.navigate('AppointmentHistory')}>
@@ -171,8 +212,13 @@ const ProfileScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  scrollContainer: { paddingBottom: 20 },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#f5f5f5' 
+  },
+  scrollContainer: { 
+    paddingBottom: 20 
+  },
   profileSection: {
     backgroundColor: 'white',
     borderRadius: 10,

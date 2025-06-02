@@ -1,16 +1,25 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Linking, Alert, Modal, Image } from 'react-native';
 import Header from '../components/Header';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/types';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import API from '../api/api';
+import { WebView } from 'react-native-webview';
+
+type DoneAppointmentRouteProp = RouteProp<RootStackParamList, 'DoneAppointment'>;
 
 const DoneAppointmentScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const route = useRoute<RouteProp<RootStackParamList, 'DoneAppointment'>>();
+  const route = useRoute<DoneAppointmentRouteProp>();
   const { appointment } = route.params;
 
-  const isPaid = appointment.status === 'оплачено';
+  const [loadingPayment, setLoadingPayment] = useState(false);
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [appointmentState, setAppointmentState] = useState(appointment);
+
+  const isPaid = appointmentState.status === 'оплачено';
 
   const statusContainerStyle = {
     backgroundColor: isPaid ? '#d4edda' : '#fff3cd',
@@ -26,21 +35,100 @@ const DoneAppointmentScreen = () => {
     color: isPaid ? '#155724' : '#856404',
   };
 
+  const handlePayment = async () => {
+    if (!appointmentState.price || Number(appointmentState.price) <= 0) {
+      Alert.alert('Помилка', 'Невірна сума для оплати');
+      return;
+    }
+
+    try {
+      setLoadingPayment(true);
+
+      const response = await API.get('/liqpay/generate', {
+        params: {
+          orderId: appointmentState.id.toString(),
+          amount: Number(appointmentState.price).toFixed(2),
+          description: `Оплата запису #${appointmentState.id}`,
+        },
+      });
+
+      const { data, signature } = response.data;
+
+      const html = `
+        <html>
+          <head><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+          <body style="margin:0;padding:0;">
+            <form id="liqpay_form" method="POST" action="https://www.liqpay.ua/api/3/checkout" accept-charset="utf-8">
+              <input type="hidden" name="data" value="${data}" />
+              <input type="hidden" name="signature" value="${signature}" />
+            </form>
+            <script>document.getElementById('liqpay_form').submit();</script>
+          </body>
+        </html>
+      `;
+
+      const base64Html = Buffer.from(html).toString('base64');
+      setPaymentUrl(`data:text/html;base64,${base64Html}`);
+      setModalVisible(true);
+    } catch (error) {
+      Alert.alert('Помилка', 'Не вдалося здійснити оплату. Спробуйте пізніше.');
+      console.error('Payment error:', error);
+    } finally {
+      setLoadingPayment(false);
+    }
+  };
+
+  const onNavigationStateChange = async (navState: any) => {
+    const { url } = navState;
+
+    if (url.includes('success') || url.includes('status=success') || url.includes('healthflow://main')) {
+      try {
+        const paidAt = new Date().toISOString();
+        await API.patch('/appointments', {
+          id: appointmentState.id,
+          is_paid: true,
+          paid_at: paidAt,
+        });
+
+        setAppointmentState({
+          ...appointmentState,
+          status: 'оплачено',
+        });
+
+        Alert.alert('Успіх', 'Оплата успішно проведена');
+      } catch (error) {
+        Alert.alert('Помилка', 'Оплату проведено, але не вдалося оновити статус запису.');
+        console.error('Помилка оновлення статусу після оплати:', error);
+      } finally {
+        setModalVisible(false);
+      }
+      return;
+    }
+
+    if (url.includes('cancel') || url.includes('failure')) {
+      setModalVisible(false);
+      Alert.alert('Увага', 'Оплату скасовано або сталася помилка');
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Header title="Деталі запису" showBack />
 
       <View style={styles.content}>
-        <Text style={styles.doctorName}>{appointment.doctorNameFull}</Text>
+
+        <Image source={require('../../assets/avatar.png')} style={styles.avatar} />
+
+        <Text style={styles.doctorName}>{appointmentState.doctorNameFull}</Text>
 
         <View style={styles.row}>
-          <Text style={styles.appointmentNumber}>Запис №{appointment.id}</Text>
-          <Text style={styles.appointmentDate}>{appointment.date}</Text>
+          <Text style={styles.appointmentNumber}>Запис №{appointmentState.id}</Text>
+          <Text style={styles.appointmentDate}>{appointmentState.date}</Text>
         </View>
 
         <View style={styles.infoSection}>
-          <Text style={styles.infoText}>Спеціалізація: {appointment.specialization}</Text>
-          <Text style={styles.infoText}>Кабінет: {appointment.cabinet}</Text>
+          <Text style={styles.infoText}>Спеціалізація: {appointmentState.specialization}</Text>
+          <Text style={styles.infoText}>Кабінет: {appointmentState.cabinet}</Text>
         </View>
 
         <View style={statusContainerStyle}>
@@ -49,9 +137,9 @@ const DoneAppointmentScreen = () => {
           </Text>
         </View>
 
-        <Text style={styles.priceText}>Вартість: {appointment.price} грн</Text>
+        <Text style={styles.priceText}>Вартість: {appointmentState.price} грн</Text>
 
-        <TouchableOpacity onPress={() => navigation.navigate('Review', { appointment })}>
+        <TouchableOpacity onPress={() => navigation.navigate('Review', { appointment: appointmentState })}>
           <Text style={styles.reviewLink}>Написати відгук... </Text>
         </TouchableOpacity>
 
@@ -83,8 +171,8 @@ const DoneAppointmentScreen = () => {
                   navigation.navigate('TextChat', {
                     doctor: {
                       id: '1',
-                      name: appointment.doctorNameFull,
-                      specialization: appointment.specialization,
+                      name: appointmentState.doctorNameFull,
+                      specialization: appointmentState.specialization,
                       avatar: require('../../assets/avatar.png'),
                     },
                   })
@@ -97,18 +185,32 @@ const DoneAppointmentScreen = () => {
         </View>
 
         <View style={styles.buttonRow}>
-
-          <TouchableOpacity
-            style={[styles.actionButton, styles.payButton]}
-            onPress={() => console.log('Оплата')}
-          >
-            <Text style={styles.actionButtonText}>Сплатити</Text>
-          </TouchableOpacity>
+          {!isPaid && (
+            <TouchableOpacity
+              style={[styles.actionButton, styles.payButton]}
+              onPress={handlePayment}
+              disabled={loadingPayment}
+            >
+              <Text style={styles.actionButtonText}>
+                {loadingPayment ? 'Завантаження...' : 'Сплатити'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
+
+      <Modal visible={modalVisible} animationType="slide" onRequestClose={() => setModalVisible(false)}>
+        <WebView
+          originWhitelist={['*']}
+          source={{ uri: paymentUrl || '' }}
+          onNavigationStateChange={onNavigationStateChange}
+          startInLoadingState
+        />
+      </Modal>
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
@@ -119,6 +221,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     color: '#2c3e50',
     textAlign: 'center',
+  },
+  avatar:{
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    alignSelf: 'center',
+    marginBottom: 12,
   },
   row: {
     flexDirection: 'row',

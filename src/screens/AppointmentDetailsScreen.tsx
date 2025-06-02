@@ -112,6 +112,9 @@ export default function AppointmentDetailsScreen() {
           <Text style={styles.label}>🏥 Кабінет:</Text>
           <Text style={styles.value}>{appointment.cabinet}</Text>
 
+          <Text style={styles.label}>💰 Ціна:</Text>
+          <Text style={styles.value}>{Number(appointment.price).toFixed(2)} грн</Text>
+
           <Text style={styles.label}>💳 Статус оплати:</Text>
           <Text
             style={[
