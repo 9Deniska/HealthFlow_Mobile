@@ -12,11 +12,11 @@ const TextChatScreen = ({ route }: Props) => {
   const doctor = route.params?.doctor;
 
   const [messages, setMessages] = useState([
-    { id: 1, text: 'Привіт', time: '14:30', sent: false },
-    { id: 2, text: 'Салам', time: '14:31', sent: false },
-    { id: 3, text: 'Лікуєш?', time: '14:32', sent: true },
-    { id: 4, text: 'Скік з мене?', time: '14:33', sent: false },
-    { id: 5, text: '52000 $', time: '14:34', sent: true },
+    { id: 1, text: 'Привіт', time: '14:30', sent: true },
+    { id: 2, text: 'Добрий день', time: '14:31', sent: false },
+    { id: 3, text: 'Допоможете?', time: '14:32', sent: true },
+    { id: 4, text: 'Так', time: '14:33', sent: false },
+    { id: 5, text: '100 $', time: '14:34', sent: false },
   ]);
   const [newMessage, setNewMessage] = useState('');
   const scrollRef = useRef<ScrollView>(null);

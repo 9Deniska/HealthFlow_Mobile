@@ -65,6 +65,8 @@ export interface FetchedAppointment {
     specialization_id: number;
     rating: number;
     department_id: number;
+    cabinet: number;
+    consultation_price: string;
   };
   client: {
     user_id: number;

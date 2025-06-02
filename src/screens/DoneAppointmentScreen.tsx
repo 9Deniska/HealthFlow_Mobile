@@ -97,12 +97,6 @@ const DoneAppointmentScreen = () => {
         </View>
 
         <View style={styles.buttonRow}>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.medicalCardButton]}
-            onPress={() => navigation.navigate('MedicCard')}
-          >
-            <Text style={styles.actionButtonText}>Медична картка</Text>
-          </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.actionButton, styles.payButton]}

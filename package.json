@@ -20,6 +20,8 @@
     "expo": "~53.0.9",
     "expo-application": "~6.1.4",
     "expo-auth-session": "~6.1.5",
+    "expo-constants": "~17.1.6",
+    "expo-notifications": "~0.31.2",
     "expo-random": "^14.0.1",
     "expo-status-bar": "~2.2.3",
     "expo-web-browser": "~14.1.6",

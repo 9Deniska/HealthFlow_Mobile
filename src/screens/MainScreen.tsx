@@ -113,7 +113,7 @@ export default function MainScreen() {
 
   return (
     <View style={styles.wrapper}>
-      <Header title="Ваші записи" />
+      <Header title="Ваші активні записи" />
       <ScrollView
         contentContainerStyle={styles.container}
         refreshControl={
