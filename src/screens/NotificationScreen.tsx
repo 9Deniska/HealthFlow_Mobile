@@ -97,14 +97,6 @@ const NotificationsScreen = () => {
                 <Text style={[styles.notificationText, { marginTop: 4 }]}>
                   Ціна: {app.price} грн.
                 </Text>
-                {!app.is_paid && (
-                  <TouchableOpacity
-                    style={styles.notificationButton}
-                    onPress={() => navigation.navigate('AppointmentDetails', { appointment: mapFetchedToAppointment(app) })}
-                  >
-                    <Text style={styles.buttonText}>Оплатити</Text>
-                  </TouchableOpacity>
-                )}
               </View>
             );
           })}
